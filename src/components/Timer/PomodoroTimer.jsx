@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useSession } from "../../context/SessionItem";
 
-const WORK_TIME = 0.2 * 60; // 25 min en segundos
-const BREAK_TIME = 5 * 60; // 5 min en segundos
+const WORK_TIME = 3 //0.2 * 60; // 25 min en segundos
+const BREAK_TIME = 3 //5 * 60; // 5 min en segundos
 
 export default function PomodoroTimer() {
     const [isRunning, setIsRunning] = useState(false);
     const [isBreak, setIsBreak] = useState(false);
     const [timeLeft, setTimeLeft] = useState(WORK_TIME);
     const timerRef = useRef(null);
+    const audio = useRef(null);
+    const { startNewSession } = useSession();
+
+    useEffect(() => {
+        audio.current = new Audio("/sounds/alert.mp3");
+    }, []);
 
     // Formato mm:ss
     const formatTime = (seconds) => {
@@ -20,12 +27,25 @@ export default function PomodoroTimer() {
     };
 
     const handleFinish = useCallback(() => {
-        setIsRunning(false);
-        setIsBreak((prev) => !prev);
-        setTimeLeft(isBreak ? WORK_TIME : BREAK_TIME);
+        if (!isBreak) {
+            // Termina work time: inicia break automáticamente
+            setIsBreak(true);
+            setTimeLeft(BREAK_TIME);
+            setIsRunning(true);
+        } else {
+            // Termina break time: vuelve a work pero NO inicia automáticamente
+            setIsBreak(false);
+            setTimeLeft(WORK_TIME);
+            setIsRunning(false);
+        }
 
-        // Puedes reproducir un sonido aquí o mostrar una notificación visual
-        // new Audio('/path/to/sound.mp3').play();
+        // 🔔 Reproducir sonido
+        if (audio.current) {
+            audio.current.currentTime = 0;
+            audio.current.play().catch((e) => console.warn("Error al reproducir sonido", e));
+        }
+
+        startNewSession();
         // alert('¡Tiempo terminado!');
     }, [isBreak]);
 

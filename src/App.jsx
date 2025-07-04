@@ -1,10 +1,13 @@
 import React from 'react'
 import Home from './pages/Home'
+import { SessionProvider } from './context/SessionItem'
 function App() {
 
   return (
     <>
-      <Home />
+      <SessionProvider>
+        <Home />
+      </SessionProvider>
     </>
   )
 }
